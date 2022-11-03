@@ -3,6 +3,7 @@ channels:
 dependencies:
 - python=3.7.0
 - pip
+- libgfortran5
 - numpy=1.18.1
 - openssl=1.0.2u
 - matplotlib
