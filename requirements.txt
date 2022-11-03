@@ -1,5 +1,5 @@
-openssl==1.0.2u
-libgfortran5==12.2.0
+openssl
+libgfortran5
 numpy==1.18.1
 matplotlib
 okada_wrapper
