@@ -2,10 +2,10 @@ channels:
 - conda-forge
 dependencies:
 - python=3.7.0
-- pip=22.3
-- openssl=1.0.2u
-- libgfortran5=12.2.0
-- numpy=1.18.1
+- pip
+- openssl
+- libgfortran5
+- numpy
 - matplotlib
 - pip:
   - okada_wrapper
