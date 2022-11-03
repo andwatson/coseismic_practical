@@ -1,3 +1,0 @@
-numpy
-matplotlib
-okada_wrapper
