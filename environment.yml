@@ -3,6 +3,7 @@ channels:
 dependencies:
 - python=3.7.0
 - numpy=1.18.1
+- openssl=1.1.1
 - matplotlib
 - pip
   - okada_wrapper
