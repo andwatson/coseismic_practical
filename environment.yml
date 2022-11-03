@@ -3,4 +3,5 @@ channels:
 dependencies:
 - numpy
 - matplotlib
-- okada_wrapper
+- pip
+  - okada_wrapper
