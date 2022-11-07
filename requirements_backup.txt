@@ -1,5 +1,0 @@
-openssl
-libgfortran5
-numpy==1.18.1
-matplotlib
-okada_wrapper
