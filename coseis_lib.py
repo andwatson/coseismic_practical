@@ -9,7 +9,6 @@ Library of python functions to be used with the coseismic_practical.
 # Packages
 import numpy as np
 import matplotlib.pyplot as plt
-from okada_wrapper import dc3dwrapper
 
 eps = 1e-14
 
