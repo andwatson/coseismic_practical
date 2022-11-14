@@ -3,9 +3,5 @@ channels:
 dependencies:
 - python=3.7
 - pip
-- gfortran
-- openssl
 - numpy
 - matplotlib
-- pip:
-  - okada_wrapper

@@ -11,75 +11,241 @@ import numpy as np
 import matplotlib.pyplot as plt
 from okada_wrapper import dc3dwrapper
 
+eps = 1e-14
+
 #-------------------------------------------------------------------------------
 
-def disloc3d3(m, x, e1, e2):
+def disloc3d3(x, y, xoff=0, yoff=0,
+            depth=5e3, length=1e3, width=1e3, 
+            slip=0.0, opening=10.0, 
+            strike=0.0, dip=0.0, rake=0.0,
+            nu=0.25):
     '''
+    Calculate surface displacements for Okada85 dislocation model
+    
+    Original version at "https://github.com/scottyhq/roipy"
+    
+    %--------------------------------------------------------------
+    OKADA85 Surface deformation due to a finite rectangular source.
+    [uE,uN,uZ,uZE,uZN,uNN,uNE,uEN,uEE] = OKADA85(...
+       E,N,DEPTH,STRIKE,DIP,LENGTH,WIDTH,RAKE,SLIP,OPEN)
+    computes displacements, tilts and strains at the surface of an elastic
+    half-space, due to a dislocation defined by RAKE, SLIP, and OPEN on a
+    rectangular fault defined by orientation STRIKE and DIP, and size LENGTH and
+    WIDTH. The fault centroid is located (0,0,-DEPTH).
 
-    Assumes a single fault plan
+       E,N    : coordinates of observation points in a geographic referential
+                (East,North,Up) relative to fault centroid (units are described below)
+       DEPTH  : depth of the fault centroid (DEPTH > 0)
+       STRIKE : fault trace direction (0 to 360 relative to North), defined so
+                that the fault dips to the right side of the trace
+       DIP    : angle between the fault and a horizontal plane (0 to 90)
+       LENGTH : fault length in the STRIKE direction (LENGTH > 0)
+       WIDTH  : fault width in the DIP direction (WIDTH > 0)
+       RAKE   : direction the hanging wall moves during rupture, measured relative
+                to the fault STRIKE (-180 to 180).
+       SLIP   : dislocation in RAKE direction (length unit)
+       OPEN   : dislocation in tensile component (same unit as SLIP)
 
+    returns the following variables (same matrix size as E and N):
+       uN,uE,uZ        : displacements (unit of SLIP and OPEN)
+    Orginal matlab function from:
+    http://www.mathworks.com/matlabcentral/fileexchange/25982-okada--surface-deformation-due-to-a-finite-rectangular-source/content/okada85.m
+    
     '''
-
-    nx = x.shape[1]
+    x = x - xoff
+    y = y - yoff
+    e = x
+    n = y
     
-    # apply shift in fault location
-    x[0,:] = x[0,:] - m[0]
-    x[1,:] = x[1,:] - m[1]
+    strike = np.deg2rad(strike)
+    dip = np.deg2rad(dip)
+    rake = np.deg2rad(rake)
     
-    # Calc alpha
-    alpha = (e1 + e2) / (e1 + 2*e2)
+    L = length
+    W = width
 
-    # Convert into dc3dwrapper inputs
-    flt_x = np.ones(nx)
-    flt_y = np.ones(nx)
-    strike = m[2]
-    dip = m[3]
-    rake = m[4]
-    slip = m[5]
-    length = m[6]
-    hmin = m[7]
-    hmax = m[8]
+    U1 = np.cos(rake) * slip
+    U2 = np.sin(rake) * slip
+    U3 = opening
+    
+    d = depth + np.sin(dip) * W / 2
+    ec = e + np.cos(strike) * np.cos(dip) * W / 2
+    nc = n - np.sin(strike) * np.cos(dip) * W / 2
+    x = np.cos(strike) * nc + np.sin(strike) * ec + L / 2
+    y = np.sin(strike) * nc - np.cos(strike) * ec + np.cos(dip) * W
+    p = y * np.cos(dip) + d * np.sin(dip)
+    q = y * np.sin(dip) - d * np.cos(dip)
 
-    sstrike = np.radians(strike+90)
-    ct = np.cos(sstrike);
-    st = np.sin(sstrike);
-    rrake = np.radians(rake+90)
-    sindip = np.sin(np.radians(dip))
-    w = (hmax - hmin) / sindip
-    ud = np.ones(nx) * slip * np.cos(rrake)
-    us = np.ones(nx) * -slip * np.sin(rrake)
-    halflen = length / 2
-    al2 = np.ones(nx) * halflen
-    al1 = -al2
-    aw1 = np.ones(nx) * hmin / sindip
-    aw2 = np.ones(nx) * hmax / sindip
+    ux = - U1 / (2 * np.pi) * chinnery(ux_ss, x, p, L, W, q, dip, nu) - \
+           U2 / (2 * np.pi) * chinnery(ux_ds, x, p, L, W, q, dip, nu) + \
+           U3 / (2 * np.pi) * chinnery(ux_tf, x, p, L, W, q, dip, nu)
+    uy = - U1 / (2 * np.pi) * chinnery(uy_ss, x, p, L, W, q, dip, nu) - \
+           U2 / (2 * np.pi) * chinnery(uy_ds, x, p, L, W, q, dip, nu) + \
+           U3 / (2 * np.pi) * chinnery(uy_tf, x, p, L, W, q, dip, nu)
+    uz = - U1 / (2 * np.pi) * chinnery(uz_ss, x, p, L, W, q, dip, nu) - \
+           U2 / (2 * np.pi) * chinnery(uz_ds, x, p, L, W, q, dip, nu) + \
+           U3 / (2 * np.pi) * chinnery(uz_tf, x, p, L, W, q, dip, nu)
+    ue = np.sin(strike) * ux - np.cos(strike) * uy
+    un = np.cos(strike) * ux + np.sin(strike) * uy
 
-    # Check that fault isn't above surface
-    assert hmin > 0
+    return np.vstack((ue, un, uz))
 
-    # Loop over points
-    X = ct * (-flt_x + x[0,:]) - st * (-flt_y + x[1,:])
-    Y = ct * (-flt_y + x[1,:]) + st * (-flt_x + x[0,:])
+'''
+Notes for I... and K... subfunctions:
+    1. original formulas use Lame's parameters as mu/(mu+lambda) which
+       depends only on the Poisson's ratio = 1 - 2*nu
+    2. tests for cos(dip) == 0 are made with "cos(dip) > eps"
+       because cos(90*np.pi/180) is not zero but = 6.1232e-17 (!)
+       NOTE: don't use cosd and sind because of incompatibility
+       with Matlab v6 and earlier...
+'''
 
-    U = np.zeros((3,nx))
-    u_xyz = np.zeros((3,nx))
+def chinnery(f, x, p, L, W, q, dip, nu):
+    ''' % Chinnery's notation [equation (24) p. 1143]'''
+    u = ( f(x, p, q, dip, nu) -
+          f(x, p - W, q, dip, nu) -
+          f(x - L, p, q, dip, nu) +
+          f(x - L, p - W, q, dip, nu) )
+    return u
 
-    for ii in range(nx):
+'''
+Displacement subfunctions
+strike-slip displacement subfunctions [equation (25) p. 1144]
+'''
 
-        # Run okada model for point
-        success, u, grad_u = dc3dwrapper(alpha, [X[ii], Y[ii], 0], hmin, -dip,
-            [al1[ii], al2[ii]], [aw1[ii], aw2[ii]], [us[ii], ud[ii], 0])
+def ux_ss(xi, eta, q, dip, nu):
 
-        u_xyz[0,ii] = u[0]
-        u_xyz[1,ii] = u[1]
-        u_xyz[2,ii] = u[2]
+    R = np.sqrt(xi ** 2 + eta ** 2 + q ** 2)
+    u = xi * q / (R * (R + eta)) + \
+        I1(xi, eta, q, dip, nu, R) * np.sin(dip)
+    k = (q != 0)
+    #u[k] = u[k] + np.arctan2( xi[k] * (eta[k]) , (q[k] * (R[k])))
+    u[k] = u[k] + np.arctan( (xi[k] * eta[k]) / (q[k] * R[k]) )
+    return u
 
-    # Format output
-    U[0,:] = ct*u_xyz[0,:] + st*u_xyz[1,:]
-    U[1,:] = -st*u_xyz[0,:] + ct*u_xyz[1,:]
-    U[2,:] = u_xyz[2,:]
 
-    return U
+def uy_ss(xi, eta, q, dip, nu):
+    R = np.sqrt(xi ** 2 + eta ** 2 + q ** 2)
+    u = (eta * np.cos(dip) + q * np.sin(dip)) * q / (R * (R + eta)) + \
+        q * np.cos(dip) / (R + eta) + \
+        I2(eta, q, dip, nu, R) * np.sin(dip)
+    return u
+
+
+def uz_ss(xi, eta, q, dip, nu):
+    R = np.sqrt(xi ** 2 + eta ** 2 + q ** 2)
+    db = eta * np.sin(dip) - q * np.cos(dip)
+    u = (eta * np.sin(dip) - q * np.cos(dip)) * q / (R * (R + eta)) + \
+        q * np.sin(dip) / (R + eta) + \
+        I4(db, eta, q, dip, nu, R) * np.sin(dip)
+    return u
+
+
+def ux_ds(xi, eta, q, dip, nu):
+    R = np.sqrt(xi ** 2 + eta ** 2 + q ** 2)
+    u = q / R - \
+        I3(eta, q, dip, nu, R) * np.sin(dip) * np.cos(dip)
+    return u
+
+
+def uy_ds(xi, eta, q, dip, nu):
+    R = np.sqrt(xi ** 2 + eta ** 2 + q ** 2)
+    u = ( (eta * np.cos(dip) + q * np.sin(dip)) * q / (R * (R + xi)) -
+           I1(xi, eta, q, dip, nu, R) * np.sin(dip) * np.cos(dip) )
+    k = (q != 0)
+    u[k] = u[k] + np.cos(dip) * np.arctan( (xi[k] * eta[k]) / (q[k] * R[k]))
+    return u
+
+
+def uz_ds(xi, eta, q, dip, nu):
+    R = np.sqrt(xi ** 2 + eta ** 2 + q ** 2)
+    db = eta * np.sin(dip) - q * np.cos(dip)
+    u = ( db * q / (R * (R + xi)) -
+          I5(xi, eta, q, dip, nu, R, db) * np.sin(dip) * np.cos(dip) )
+    k = (q != 0)
+    #u[k] = u[k] + np.sin(dip) * np.arctan2(xi[k] * eta[k] , q[k] * R[k])
+    u[k] = u[k] + np.sin(dip) * np.arctan( (xi[k] * eta[k]) / (q[k] * R[k]))
+    return u
+
+
+def ux_tf(xi, eta, q, dip, nu):
+    R = np.sqrt(xi ** 2 + eta ** 2 + q ** 2)
+    u = q ** 2 / (R * (R + eta)) - \
+        I3(eta, q, dip, nu, R) * (np.sin(dip) ** 2)
+    return u
+
+
+def uy_tf(xi, eta, q, dip, nu):
+    R = np.sqrt(xi ** 2 + eta ** 2 + q ** 2)
+    u = - (eta * np.sin(dip) - q * np.cos(dip)) * q / (R * (R + xi)) - \
+        np.sin(dip) * xi * q / (R * (R + eta)) - \
+        I1(xi, eta, q, dip, nu, R) * (np.sin(dip) ** 2)
+    k = (q != 0)
+    #u[k] = u[k] + np.sin(dip) * np.arctan2(xi[k] * eta[k] , q[k] * R[k])
+    u[k] = u[k] + np.sin(dip) * np.arctan( (xi[k] * eta[k]) , (q[k] * R[k]) )
+    return u
+
+
+def uz_tf(xi, eta, q, dip, nu):
+    R = np.sqrt(xi**2 + eta**2 + q**2)
+    db = eta * np.sin(dip) - q * np.cos(dip)
+    u = (eta * np.cos(dip) + q * np.sin(dip)) * q / (R * (R + xi)) + \
+         np.cos(dip) * xi * q / (R * (R + eta)) - \
+         I5(xi, eta, q, dip, nu, R, db) * np.sin(dip)**2
+    k = (q != 0) #not at depth=0?
+    u[k] = u[k] - np.cos(dip) * np.arctan( (xi[k] * eta[k]) / (q[k] * R[k]) )
+    return u
+
+
+def I1(xi, eta, q, dip, nu, R):
+    db = eta * np.sin(dip) - q * np.cos(dip)
+    if np.cos(dip) > eps:
+        I = (1 - 2 * nu) * (- xi / (np.cos(dip) * (R + db))) - \
+            np.sin(dip) / np.cos(dip) * \
+            I5(xi, eta, q, dip, nu, R, db)
+    else:
+        I = -(1 - 2 * nu) / 2 * xi * q / (R + db) ** 2
+    return I
+
+
+def I2(eta, q, dip, nu, R):
+    I = (1 - 2 * nu) * (-np.log(R + eta)) - \
+        I3(eta, q, dip, nu, R)
+    return I
+
+
+def I3(eta, q, dip, nu, R):
+    yb = eta * np.cos(dip) + q * np.sin(dip)
+    db = eta * np.sin(dip) - q * np.cos(dip)
+    if np.cos(dip) > eps:
+        I = (1 - 2 * nu) * (yb / (np.cos(dip) * (R + db)) - np.log(R + eta)) + \
+            np.sin(dip) / np.cos(dip) * \
+            I4(db, eta, q, dip, nu, R)
+    else:
+        I = (1 - 2 * nu) / 2 * (eta / (R + db) + yb * q / (R + db) ** 2 - np.log(R + eta))
+    return I
+
+
+def I4(db, eta, q, dip, nu, R):
+    if np.cos(dip) > eps:
+        I = (1 - 2 * nu) * 1.0 / np.cos(dip) * \
+            (np.log(R + db) - np.sin(dip) * np.log(R + eta))
+    else:
+        I = - (1 - 2 * nu) * q / (R + db)
+    return I
+
+
+def I5(xi, eta, q, dip, nu, R, db):
+    X = np.sqrt(xi**2 + q**2)
+    if np.cos(dip) > eps:
+        I = (1 - 2 * nu) * 2 / np.cos(dip) * \
+             np.arctan( (eta * (X + q*np.cos(dip)) + X*(R + X) * np.sin(dip)) /
+                        (xi*(R + X) * np.cos(dip)) ) 
+        I[xi == 0] = 0
+    else:
+        I = -(1 - 2 * nu) * xi * np.sin(dip) / (R + db)
+    return I
 
 #-------------------------------------------------------------------------------
 
@@ -308,19 +474,27 @@ def fault_for_plotting(model):
     Get trace and projected corners of fault for plotting.
     '''
     
-    end1x = model[0] + np.sin(np.deg2rad(model[2])) * model[6]/2
-    end2x = model[0] - np.sin(np.deg2rad(model[2])) * model[6]/2
-    end1y = model[1] + np.cos(np.deg2rad(model[2])) * model[6]/2
-    end2y = model[1] - np.cos(np.deg2rad(model[2])) * model[6]/2
+    cen_offset = model[7]/np.tan(np.deg2rad(model[3]))
     
-    c1x = end1x + np.sin(np.deg2rad(model[2]+90)) * (model[7] / np.tan(np.deg2rad(model[3])))
-    c2x = end1x + np.sin(np.deg2rad(model[2]+90)) * (model[8] / np.tan(np.deg2rad(model[3])))
-    c3x = end2x + np.sin(np.deg2rad(model[2]+90)) * (model[8] / np.tan(np.deg2rad(model[3])))
-    c4x = end2x + np.sin(np.deg2rad(model[2]+90)) * (model[7] / np.tan(np.deg2rad(model[3])))
-    c1y = end1y + np.cos(np.deg2rad(model[2]+90)) * (model[7] / np.tan(np.deg2rad(model[3])))
-    c2y = end1y + np.cos(np.deg2rad(model[2]+90)) * (model[8] / np.tan(np.deg2rad(model[3])))
-    c3y = end2y + np.cos(np.deg2rad(model[2]+90)) * (model[8] / np.tan(np.deg2rad(model[3])))
-    c4y = end2y + np.cos(np.deg2rad(model[2]+90)) * (model[7] / np.tan(np.deg2rad(model[3])))
+    trace_cen_x = model[0] - (cen_offset * np.cos(np.deg2rad(model[2])))
+    trace_cen_y = model[1] + (cen_offset * np.sin(np.deg2rad(model[2])))
+    
+    top_depth = model[7] - (model[8]/2)*np.sin(np.deg2rad(model[3]))
+    bottom_depth = model[7] + (model[8]/2)*np.sin(np.deg2rad(model[3]))
+    
+    end1x = trace_cen_x + np.sin(np.deg2rad(model[2])) * model[6]/2
+    end2x = trace_cen_x - np.sin(np.deg2rad(model[2])) * model[6]/2
+    end1y = trace_cen_y + np.cos(np.deg2rad(model[2])) * model[6]/2
+    end2y = trace_cen_y - np.cos(np.deg2rad(model[2])) * model[6]/2
+    
+    c1x = end1x + np.sin(np.deg2rad(model[2]+90)) * (top_depth / np.tan(np.deg2rad(model[3])))
+    c2x = end1x + np.sin(np.deg2rad(model[2]+90)) * (bottom_depth / np.tan(np.deg2rad(model[3])))
+    c3x = end2x + np.sin(np.deg2rad(model[2]+90)) * (bottom_depth / np.tan(np.deg2rad(model[3])))
+    c4x = end2x + np.sin(np.deg2rad(model[2]+90)) * (top_depth / np.tan(np.deg2rad(model[3])))
+    c1y = end1y + np.cos(np.deg2rad(model[2]+90)) * (top_depth / np.tan(np.deg2rad(model[3])))
+    c2y = end1y + np.cos(np.deg2rad(model[2]+90)) * (bottom_depth / np.tan(np.deg2rad(model[3])))
+    c3y = end2y + np.cos(np.deg2rad(model[2]+90)) * (bottom_depth / np.tan(np.deg2rad(model[3])))
+    c4y = end2y + np.cos(np.deg2rad(model[2]+90)) * (top_depth / np.tan(np.deg2rad(model[3])))
     
     return end1x, end2x, end1y, end2y, c1x, c2x, c3x, c4x, c1y, c2y, c3y, c4y
 
