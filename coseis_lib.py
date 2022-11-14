@@ -499,6 +499,54 @@ def fault_for_plotting(model):
 
 #-------------------------------------------------------------------------------
 
+def load_ifgs(example_name):
+    '''
+    Load of wrapped and unwrapped interferograms for a given example.
+    Options are "iran", "greece", and "afghanistan".
+    '''
+    
+    # set input file paths
+    if example_name == 'iran':
+        unw_file = 'data/iran/sarpol.unw'
+        diff_file = 'data/iran/sarpol.diff'
+        param_file = 'data/iran/sarpol.par'
+            
+    elif example_name == 'greece':
+        unw_file = 'data/greece/greece.unw'
+        diff_file = 'data/greece/greece.diff'
+        param_file = 'data/greece/greece.par'
+                
+    elif example_name == 'afghanistan':
+        print('coming soon')
+        
+    else:
+        print('Please provide name of example to load')
+            
+    
+    # Read height and width in pixels from parameter file
+    ifg_length = int(get_par(param_file,'length'))
+    ifg_width = int(get_par(param_file,'width'))
+
+    # Read coordinates of bottom corner
+    corner_x = float(get_par(param_file,'corner_x'))
+    corner_y = float(get_par(param_file,'corner_y'))
+
+    # Read spacing of coordinates
+    x_spacing = float(get_par(param_file,'x_spacing'))
+    y_spacing = float(get_par(param_file,'y_spacing'))
+
+    # Generate coordinate grids
+    x = corner_x + x_spacing*np.arange(1,ifg_width+1) - x_spacing/2
+    y = corner_y + y_spacing*np.arange(1,ifg_length+1) - y_spacing/2
+
+    # Load the interferogram
+    unw = np.fromfile(unw_file, dtype='float32').reshape((ifg_length, ifg_width))
+    diff = np.fromfile(diff_file, dtype='float32').reshape((ifg_length, ifg_width))
+    
+    return x, y, unw, diff
+
+#-------------------------------------------------------------------------------
+
 def get_par(par_file,par_name):
     '''
     Returns the value of the requested parameter in the parameter file.
