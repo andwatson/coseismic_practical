@@ -517,7 +517,9 @@ def load_ifgs(example_name):
         param_file = 'data/greece/greece.par'
                 
     elif example_name == 'afghanistan':
-        print('coming soon')
+        unw_file = 'data/afghanistan/afghanistan.unw'
+        diff_file = 'data/afghanistan/afghanistan.diff'
+        param_file = 'data/afghanistan/afghanistan.par'
         
     else:
         print('Please provide name of example to load')
