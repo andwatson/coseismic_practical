@@ -238,9 +238,10 @@ def I4(db, eta, q, dip, nu, R):
 def I5(xi, eta, q, dip, nu, R, db):
     X = np.sqrt(xi**2 + q**2)
     if np.cos(dip) > eps:
-        I = (1 - 2 * nu) * 2 / np.cos(dip) * \
-             np.arctan( (eta * (X + q*np.cos(dip)) + X*(R + X) * np.sin(dip)) /
-                        (xi*(R + X) * np.cos(dip)) ) 
+        with np.errstate(divide='ignore'):
+            I = (1 - 2 * nu) * 2 / np.cos(dip) * \
+                 np.arctan( (eta * (X + q*np.cos(dip)) + X*(R + X) * np.sin(dip)) /
+                            (xi*(R + X) * np.cos(dip)) ) 
         I[xi == 0] = 0
     else:
         I = -(1 - 2 * nu) * xi * np.sin(dip) / (R + db)
@@ -389,14 +390,16 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     
     # Convert to LOS
     los_grid = (xgrid * e2los) + (ygrid * n2los) + (zgrid * u2los)
-    los_grid_wrap = np.mod(los_grid + 10000, 0.028333)
+    los_grid_wrap = np.mod(los_grid+10000, 0.028333)
     
     # Rewrap the original
-    data_diff = np.mod(data_unw + 10000, 0.028333)
+    with np.errstate(all='ignore'):
+        data_diff = np.mod(data_unw+10000, 0.028333)
     
     # Calculate residual
     resid = data_unw - los_grid
-    resid_wrapped = np.mod(resid + 10000, 0.028333)
+    with np.errstate(all='ignore'):
+        resid_wrapped = np.mod(resid+10000, 0.028333)
     
     # Fault outline for plotting
     end1x, end2x, end1y, end2y, c1x, c2x, c3x, c4x, c1y, c2y, c3y, c4y = fault_for_plotting(model)
@@ -443,7 +446,7 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     ax[2,0].set_title('Unwrapped residual (mm)')
     
     # Plot wrapped data
-    im_u = ax[0,1].imshow(data_diff/0.028333*2*np.pi-np.pi, extent=extent, origin='lower')
+    im_u = ax[0,1].imshow(data_diff/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', vmin=-3.14, vmax=3.14)
     ax[0,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='black')
     ax[0,1].scatter(end1x/1000, end1y/1000, color='black')
     ax[0,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='black')
@@ -453,7 +456,7 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     ax[0,1].set_title('Wrapped interferogram (mm)')
     
     # Plot wrapped model
-    im_u = ax[1,1].imshow(los_grid_wrap/0.028333*2*np.pi-np.pi, extent=extent, origin='lower')
+    im_u = ax[1,1].imshow(los_grid_wrap/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', vmin=-3.14, vmax=3.14)
     ax[1,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='black')
     ax[1,1].scatter(end1x/1000, end1y/1000, color='black')
     ax[1,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='black')
@@ -463,7 +466,7 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     ax[1,1].set_title('Wrapped model (mm)')
     
     # Plot wrapped residual
-    im_u = ax[2,1].imshow(resid_wrapped/0.028333*2*np.pi-np.pi, extent=extent, origin='lower')
+    im_u = ax[2,1].imshow(resid_wrapped/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', vmin=-3.14, vmax=3.14)
     ax[2,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='black')
     ax[2,1].scatter(end1x/1000, end1y/1000, color='black')
     ax[2,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='black')
