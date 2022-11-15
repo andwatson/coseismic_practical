@@ -401,6 +401,13 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     # Fault outline for plotting
     end1x, end2x, end1y, end2y, c1x, c2x, c3x, c4x, c1y, c2y, c3y, c4y = fault_for_plotting(model)
     
+    # Calculate and print seismic moment
+    seis_moment = 3e10 * model[5] * (model[6] * model[8]) # in Nm
+    moment_mag = (2/3) * np.log10(seis_moment/1e-7) - 10.7
+    
+    print('Estimated seismic moment = {} Nm'.format(seis_moment))
+    print('Estimated moment magnitude = {}'.format(round(moment_mag,2)))
+    
     # Setup plot
     fig, ax = plt.subplots(3, 2, figsize=(23, 30))
     extent = (x[0], x[-1], y[0], y[-1])
@@ -499,6 +506,19 @@ def fault_for_plotting(model):
 
 #-------------------------------------------------------------------------------
 
+def comp2los(azimuth_angle, incidence_angle):
+    '''
+    Convert azimuth and incidence angle to unit vector components.
+    '''
+    
+    e2los = np.cos(np.deg2rad(azimuth_angle)) * np.sin(np.deg2rad(incidence_angle))
+    n2los = -np.sin(np.deg2rad(azimuth_angle)) * np.sin(np.deg2rad(incidence_angle))
+    u2los = -np.cos(np.deg2rad(incidence_angle))
+    
+    return e2los, n2los, u2los
+
+#-------------------------------------------------------------------------------
+
 def load_ifgs(example_name):
     '''
     Load of wrapped and unwrapped interferograms for a given example.
@@ -566,3 +586,65 @@ def get_par(par_file,par_name):
                 par_val = line.split()[1].strip()
     
     return par_val
+
+#-------------------------------------------------------------------------------
+
+def print_results():
+    '''
+    Print desired model parameter values for the three examples
+    '''
+    
+    output = """
+    Well done for completing the practical.
+    Printed below are 'best fit' model parameters for the three examples, along with their source.
+    
+    ========================================
+    Greece
+    ----------------------------------------
+              xcen = 
+              ycen = 
+            strike = 
+               dip = 
+              rake = 
+              slip = 
+    centroid depth = 
+             width = 
+            length = 
+            
+    Source: https://pubs.geoscienceworld.org/ssa/srl/article/93/5/2584/614110/Coseismic-Surface-Deformation-Fault-Modeling-and
+    
+    ========================================
+    Afghanistan
+    ----------------------------------------
+              xcen = 
+              ycen = 
+            strike = 
+               dip = 
+              rake = 
+              slip = 
+    centroid depth = 
+             width = 
+            length = 
+            
+    Source:
+            
+    ========================================
+    Iran
+    ----------------------------------------
+              xcen = 
+              ycen = 
+            strike = 
+               dip = 
+              rake = 
+              slip = 
+    centroid depth = 
+             width = 
+            length = 
+            
+    Source: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JB016221
+    
+    """
+    
+    print(output)
+    
+    
