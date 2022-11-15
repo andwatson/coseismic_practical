@@ -519,7 +519,7 @@ def comp2los(azimuth_angle, incidence_angle):
 
 #-------------------------------------------------------------------------------
 
-def load_ifgs(example_name):
+def load_ifgs(example_name, downsamp=False):
     '''
     Load of wrapped and unwrapped interferograms for a given example.
     Options are "iran", "greece", and "afghanistan".
@@ -564,6 +564,14 @@ def load_ifgs(example_name):
     # Load the interferogram
     unw = np.fromfile(unw_file, dtype='float32').reshape((ifg_length, ifg_width))
     diff = np.fromfile(diff_file, dtype='float32').reshape((ifg_length, ifg_width))
+    
+    # Downsample Sarpol by selecting every other point, so as to increase run speed on binder.
+    # Doing so here so that it's easy to change back.
+    if downsamp:
+        x = x[0::2]
+        y = y[0::2]
+        unw = unw[0::2,0::2]
+        diff = diff[0::2,0::2]
     
     return x, y, unw, diff
 
