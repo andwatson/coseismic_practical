@@ -415,7 +415,7 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     
     print('Estimated seismic moment = {} Nm'.format(seis_moment))
     print('Estimated moment magnitude = {}'.format(round(moment_mag,2)))
-    print('RMS misfit between data and model = {} mm'.format(round(rms_misfit(data_unw,los_grid),5)))
+    print('RMS misfit between data and model = {} mm'.format(round(rms_misfit(data_unw,los_grid)*1000,2)))
     
     # Setup plot
     fig, ax = plt.subplots(3, 2, figsize=(23, 30))
