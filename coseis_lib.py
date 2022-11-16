@@ -52,6 +52,11 @@ def disloc3d3(x, y, xoff=0, yoff=0,
     http://www.mathworks.com/matlabcentral/fileexchange/25982-okada--surface-deformation-due-to-a-finite-rectangular-source/content/okada85.m
     
     '''
+    
+    # check that top of fault isn't above 0 m surface
+    top_depth = depth - (width/2) * np.sin(np.deg2rad(dip))
+    assert top_depth >= np.float(0), "Fault breaches 0 m surface, please change either centroid depth or fault width."        
+    
     x = x - xoff
     y = y - yoff
     e = x
@@ -410,6 +415,7 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     
     print('Estimated seismic moment = {} Nm'.format(seis_moment))
     print('Estimated moment magnitude = {}'.format(round(moment_mag,2)))
+    print('RMS misfit between data and model = {} mm'.format(round(rms_misfit(data_unw,los_grid),5)))
     
     # Setup plot
     fig, ax = plt.subplots(3, 2, figsize=(23, 30))
@@ -597,6 +603,22 @@ def get_par(par_file,par_name):
                 par_val = line.split()[1].strip()
     
     return par_val
+
+#-------------------------------------------------------------------------------
+
+def rms_misfit(a,b):
+    '''
+    Calculate the root-mean-square misfit between 'a' and 'b'.
+    
+    INPUTS
+        a,b = two arrays of same length
+    OUTPUTS
+        rms = rms misfit between a and b (a-b)
+    '''
+    
+    rms = np.sqrt(np.nanmean((a-b)**2))
+    
+    return rms
 
 #-------------------------------------------------------------------------------
 
