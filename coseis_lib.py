@@ -9,6 +9,7 @@ Library of python functions to be used with the coseismic_practical.
 # Packages
 import numpy as np
 import matplotlib.pyplot as plt
+from cmcrameri import cm
 
 eps = 1e-14
 
@@ -282,40 +283,43 @@ def plot_enu(U, model, x, y):
     extent = (x[0], x[-1], y[0], y[-1])
     
     # Plot East
-    im_e = ax[0,0].imshow(xgrid, extent=extent, origin='lower')
-    ax[0,0].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='White')
-    ax[0,0].scatter(end1x/1000, end1y/1000, color='white')
-    ax[0,0].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='White')
+    im_e = ax[0,0].imshow(xgrid, extent=extent, origin='lower', cmap=cm.batlow)
+    ax[0,0].contour(xx, yy, xgrid, linestyles='dashed', colors='white')
+    ax[0,0].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='Black')
+    ax[0,0].scatter(end1x/1000, end1y/1000, color='Black')
+    ax[0,0].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='Black')
     fig.colorbar(im_e, ax=ax[0,0])
     ax[0,0].set_xlabel('Easting (km)')
     ax[0,0].set_ylabel('Northing (km)')
     ax[0,0].set_title('East displacement (mm)')
     
     # Plot North
-    im_n = ax[0,1].imshow(ygrid, extent=extent, origin='lower')
-    ax[0,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='White')
-    ax[0,1].scatter(end1x/1000, end1y/1000, color='white')
-    ax[0,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='White')
+    im_n = ax[0,1].imshow(ygrid, extent=extent, origin='lower', cmap=cm.batlow)
+    ax[0,1].contour(xx, yy, ygrid, linestyles='dashed', colors='white')
+    ax[0,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='Black')
+    ax[0,1].scatter(end1x/1000, end1y/1000, color='Black')
+    ax[0,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='Black')
     fig.colorbar(im_n, ax=ax[0,1])
     ax[0,1].set_xlabel('Easting (km)')
     ax[0,1].set_ylabel('Northing (km)')
     ax[0,1].set_title('North displacement (mm)')
     
     # Plot Up
-    im_u = ax[1,0].imshow(zgrid, extent=extent, origin='lower')
-    ax[1,0].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='White')
-    ax[1,0].scatter(end1x/1000, end1y/1000, color='white')
-    ax[1,0].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='White')
+    im_u = ax[1,0].imshow(zgrid, extent=extent, origin='lower', cmap=cm.batlow)
+    ax[1,0].contour(xx, yy, zgrid, linestyles='dashed', colors='white')
+    ax[1,0].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='Black')
+    ax[1,0].scatter(end1x/1000, end1y/1000, color='Black')
+    ax[1,0].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='Black')
     fig.colorbar(im_u, ax=ax[1,0])
     ax[1,0].set_xlabel('Easting (km)')
     ax[1,0].set_ylabel('Northing (km)')
     ax[1,0].set_title('Vertical displacement (mm)')
     
     # Plot 3D deformation
-    im_3d = ax[1,1].imshow(zgrid, extent=extent, origin='lower')
-    ax[1,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='White')
-    ax[1,1].scatter(end1x/1000, end1y/1000, color='white')
-    ax[1,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='White')
+    im_3d = ax[1,1].imshow(zgrid, extent=extent, origin='lower', cmap=cm.batlow)
+    ax[1,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='Black')
+    ax[1,1].scatter(end1x/1000, end1y/1000, color='Black')
+    ax[1,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='Black')
     fig.colorbar(im_3d, ax=ax[1,1], label='Vertical displacement (mm)')
     ax[1,1].quiver(xx[24::25, 24::25], yy[24::25, 24::25], xgrid[24::25, 24::25]/1000, ygrid[24::25, 24::25]/1000, scale=1, color='White')
     ax[1,1].set_xlabel('Easting (km)')
@@ -354,7 +358,7 @@ def plot_los(U, model, x, y, e2los, n2los, u2los):
     extent = (x[0], x[-1], y[0], y[-1])
     
     # Plot Unwrapped
-    im_u = ax[0].imshow(los_grid*1000, extent=extent, origin='lower')
+    im_u = ax[0].imshow(los_grid*1000, extent=extent, origin='lower', cmap=cm.batlow)
     ax[0].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='White')
     ax[0].scatter(end1x/1000, end1y/1000, color='white')
     ax[0].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='White')
@@ -364,7 +368,7 @@ def plot_los(U, model, x, y, e2los, n2los, u2los):
     ax[0].set_title('Unwrapped LOS displacement (mm)')
     
     # Plot Wrapped
-    im_w = ax[1].imshow(los_grid_wrap/0.028333*2*np.pi-np.pi, extent=extent, origin='lower')
+    im_w = ax[1].imshow(los_grid_wrap/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', cmap=cm.batlowK)
     ax[1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='White')
     ax[1].scatter(end1x/1000, end1y/1000, color='white')
     ax[1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='White')
@@ -376,7 +380,7 @@ def plot_los(U, model, x, y, e2los, n2los, u2los):
     
 #-------------------------------------------------------------------------------
 
-def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
+def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los, show_grid=False):
     '''
     Compare modelled LOS displacements with wrapped and unwrapped intererograms.
     '''
@@ -422,9 +426,11 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     extent = (x[0], x[-1], y[0], y[-1])
     
     # Plot unwrapped data
-    im_u = ax[0,0].imshow(data_unw*1000, extent=extent, origin='lower')
+    im_u = ax[0,0].imshow(data_unw*1000, extent=extent, origin='lower', cmap=cm.batlow)
     ax[0,0].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='black')
     ax[0,0].scatter(end1x/1000, end1y/1000, color='black')
+    if show_grid:
+        ax[0,0].grid()
     ax[0,0].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='black')
     fig.colorbar(im_u, ax=ax[0,0])
     ax[0,0].set_xlabel('Easting (km)')
@@ -432,9 +438,11 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     ax[0,0].set_title('Unwrapped interferogram (mm)')
     
     # Plot unwrapped model
-    im_u = ax[1,0].imshow(los_grid*1000, extent=extent, origin='lower')
+    im_u = ax[1,0].imshow(los_grid*1000, extent=extent, origin='lower', cmap=cm.batlow)
     ax[1,0].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='black')
     ax[1,0].scatter(end1x/1000, end1y/1000, color='black')
+    if show_grid:
+        ax[1,0].grid()
     ax[1,0].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='black')
     fig.colorbar(im_u, ax=ax[1,0])
     ax[1,0].set_xlabel('Easting (km)')
@@ -442,9 +450,11 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     ax[1,0].set_title('Unwrapped model (mm)')
     
     # Plot unwrapped residual
-    im_u = ax[2,0].imshow(resid*1000, extent=extent, origin='lower')
+    im_u = ax[2,0].imshow(resid*1000, extent=extent, origin='lower', cmap=cm.batlow)
     ax[2,0].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='black')
     ax[2,0].scatter(end1x/1000, end1y/1000, color='black')
+    if show_grid:
+        ax[2,0].grid()
     ax[2,0].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='black')
     fig.colorbar(im_u, ax=ax[2,0])
     ax[2,0].set_xlabel('Easting (km)')
@@ -452,9 +462,11 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     ax[2,0].set_title('Unwrapped residual (mm)')
     
     # Plot wrapped data
-    im_u = ax[0,1].imshow(data_diff/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', vmin=-3.14, vmax=3.14)
+    im_u = ax[0,1].imshow(data_diff/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', vmin=-3.14, vmax=3.14, cmap=cm.batlowK)
     ax[0,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='black')
     ax[0,1].scatter(end1x/1000, end1y/1000, color='black')
+    if show_grid:
+        ax[0,1].grid()
     ax[0,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='black')
     fig.colorbar(im_u, ax=ax[0,1])
     ax[0,1].set_xlabel('Easting (km)')
@@ -462,9 +474,11 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     ax[0,1].set_title('Wrapped interferogram (mm)')
     
     # Plot wrapped model
-    im_u = ax[1,1].imshow(los_grid_wrap/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', vmin=-3.14, vmax=3.14)
+    im_u = ax[1,1].imshow(los_grid_wrap/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', vmin=-3.14, vmax=3.14, cmap=cm.batlowK)
     ax[1,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='black')
     ax[1,1].scatter(end1x/1000, end1y/1000, color='black')
+    if show_grid:
+        ax[1,1].grid()
     ax[1,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='black')
     fig.colorbar(im_u, ax=ax[1,1])
     ax[1,1].set_xlabel('Easting (km)')
@@ -472,9 +486,11 @@ def plot_data_model(x, y, U, model, data_unw, e2los, n2los, u2los):
     ax[1,1].set_title('Wrapped model (mm)')
     
     # Plot wrapped residual
-    im_u = ax[2,1].imshow(resid_wrapped/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', vmin=-3.14, vmax=3.14)
+    im_u = ax[2,1].imshow(resid_wrapped/0.028333*2*np.pi-np.pi, extent=extent, origin='lower', vmin=-3.14, vmax=3.14, cmap=cm.batlowK)
     ax[2,1].plot(np.array([end1x, end2x])/1000, np.array([end1y, end2y])/1000, color='black')
     ax[2,1].scatter(end1x/1000, end1y/1000, color='black')
+    if show_grid:
+        ax[2,1].grid()
     ax[2,1].plot(np.array([c1x, c2x, c3x, c4x, c1x])/1000, np.array([c1y, c2y, c3y, c4y, c1y])/1000, color='black')
     fig.colorbar(im_u, ax=ax[2,1])
     ax[2,1].set_xlabel('Easting (km)')
@@ -581,6 +597,11 @@ def load_ifgs(example_name, downsamp=False):
         y = y[0::2]
         unw = unw[0::2,0::2]
         diff = diff[0::2,0::2]
+        
+    # The Afghanistan earthquake has a low signal-to-noise ratio, so the reference point 
+    # noticeably impacts the residual rms. Shifting it so that the noise is roughly zero centred.
+    if example_name == 'afghanistan':
+        unw = unw - np.nanmean(unw)
     
     return x, y, unw, diff
 
@@ -629,50 +650,51 @@ def print_results():
     
     output = """
     Well done for completing the practical.
-    Printed below are 'best fit' model parameters for the three examples, along with their source.
+    Printed below are 'good fit' model parameters for the three examples, based on the provided source
+    and with a bit of adjusting from John Elliott.
     
     ========================================
     Greece
     ----------------------------------------
-              xcen = 
-              ycen = 
-            strike = 
-               dip = 
-              rake = 
-              slip = 
-    centroid depth = 
-             width = 
-            length = 
+              xcen = 150
+              ycen = -150
+            strike = 315
+               dip = 36
+              rake = -100
+              slip = 1.15
+    centroid depth = 4500
+             width = 9400
+            length = 9900
             
     Source: https://pubs.geoscienceworld.org/ssa/srl/article/93/5/2584/614110/Coseismic-Surface-Deformation-Fault-Modeling-and
     
     ========================================
     Afghanistan
     ----------------------------------------
-              xcen = 
-              ycen = 
-            strike = 
-               dip = 
-              rake = 
-              slip = 
-    centroid depth = 
-             width = 
-            length = 
+              xcen = 1000
+              ycen = 1000
+            strike = 210
+               dip = 78
+              rake = 15
+              slip = 1.4
+    centroid depth = 2800
+             width = 4000
+            length = 6000
             
-    Source:
+    Source: https://earthquake.usgs.gov/earthquakes/eventpage/us7000hj3u/executive
             
     ========================================
     Iran
     ----------------------------------------
-              xcen = 
-              ycen = 
-            strike = 
-               dip = 
-              rake = 
-              slip = 
-    centroid depth = 
-             width = 
-            length = 
+              xcen = -20000
+              ycen = -10000
+            strike = 353.7
+               dip = 136.8
+              rake = 3.05
+              slip = 3.05
+    centroid depth = 14800
+             width = 21200
+            length = 40100
             
     Source: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2018JB016221
     

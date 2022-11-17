@@ -5,3 +5,4 @@ dependencies:
 - pip
 - numpy
 - matplotlib
+- cmcrameri
